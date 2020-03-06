@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="./init.css">
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js'></script>
+</head>
+
+<body>
+    <div id="app">
+        <button id="bthHigher" class="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded">上級 :
+            michaelcs01</button>
+        <button id="bthLower" class="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded">下級 :
+            michcs0111</button>
+        <input type="hidden" id="touserid">
+        <div class="mx-auto">
+            <div class="flex flex-wrap">
+                <div class="w-full sm:w-1/3 mt-2 sm:mt-0 px-2">
+                    <div id="contact"></div>
+                </div>
+                <div class="w-full sm:w-1/2 mt-2 sm:mt-0 px-2">
+                    <div id="chatlog"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script>
+        const socket = io('http://localhost:3021')
+        socket.on('receiveToken', data => {
+            console.log(data);
+            localStorage.setItem('jwt', data)
+        })
+
+        socket.on('backcontact', data => {
+            console.log(data);
+            data.forEach(item => {
+                const tmp = `
+                <section onclick="getchatlog(${item.userid})" class="px-6 py-4 mt-10 rounded bg-blue-500">
+                    <h2 class="text-gray-500">${item.username}</h2>
+                    <p class="break-all">
+                        送出者 :${item.msg && item.msg.is_sender ? 'Y' : 'N'}<br/>
+                        最後訊息:${item.msg ? item.msg.msg : ''},<br/>
+                        最後日期:${item.msg ? item.msg.time : ''},<br/>
+                        未讀:${item.msg && item.msg.unread ? item.msg.unread : '0'},<br/>
+                    </p>
+                </section>
+                `
+                $('#contact').append(tmp)
+            })
+        })
+
+        socket.on('backchatlog', data => {
+            console.log(data);
+            // 這裡製作一個點擊已讀的動作當作滾動
+            data.sort((itemA, itemB) => {
+                return Number(itemA.id) - Number(itemB.id)
+            }).forEach(item => {
+                const message = `
+                    <div ${item.is_sender === false && item.status !== 1 ? `onclick="setreaded(${item.id})"` : ''} class="px-6 py-4 rounded my-1 ${item.status === 1 ? 'bg-gray-300' : 'bg-blue-300'} ">
+                        <p class="break-all">
+                            id:${item.id}<br/>
+                            送出者送出:${item.is_sender}<br/>
+                            訊息:${item.msg}，<br/>
+                            訊息時間:${item.time}，<br/>
+                            是否已讀:${item.status}<br/>
+                        </p>
+                    </div>
+                `
+                $('#chatlog').append(message)
+            })
+        })
+        // 這裡做一個點訊息增加已讀的動作
+
+        socket.on('receivedunread', data => {
+            console.log(data);
+        })
+
+        socket.on('disconnect', _ => {
+            console.log('斷線');
+        })
+        socket.on('reconnect', _ => {
+            console.log('重新連線');
+        })
+
+        $(function () {
+            // 這裡先測R88
+            $('#bthHigher').click(function (e) {
+                const data = {
+                    userid: "57276",
+                    username: "michaelcs01",
+                    islvtop: 1,
+                    usertype: "1",
+                }
+                socket.emit('personalize', data)
+            });
+
+            $('#bthLower').click(function (e) {
+                const data = {
+                    userid: "57284",
+                    username: "michcs0111",
+                    islvtop: 0,
+                    usertype: "0",
+                }
+                socket.emit('personalize', data)
+            });
+        });
+
+        function getchatlog(userid) {
+            $('#touserid').val(userid)
+            if (userid !== 0) {
+                const sendData = {
+                    auth: localStorage.getItem('jwt'),
+                    touserid: userid,
+                }
+                socket.emit('getChatLog', sendData)
+            } else {
+                console.log('客服先不堤供');
+            }
+        }
+
+        function setreaded(Msgid) {
+            const sendUnread = {
+                auth: localStorage.getItem('jwt'),
+                touserid: $('#touserid').val(),
+                chatid: Msgid,
+            }
+            socket.emit('setreaded', sendUnread)
+        }
+
+    </script>
+</body>
+
+</html>
