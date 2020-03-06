@@ -47,17 +47,35 @@
                         送出者 :${item.msg && item.msg.is_sender ? 'Y' : 'N'}<br/>
                         最後訊息:${item.msg ? item.msg.msg : ''},<br/>
                         最後日期:${item.msg ? item.msg.time : ''},<br/>
-                        未讀:${item.msg && item.msg.unread ? item.msg.unread : '0'},<br/>
+                        未讀:<span id="unread_${item.userid}">${item.msg && item.msg.unread ? item.msg.unread : '0'}</span>,<br/>
                     </p>
                 </section>
                 `
                 $('#contact').append(tmp)
             })
+
+            // username: "上级"
+            // userid: 57276
+            // isParent: true
+            // msg:{
+            // is_sender: false
+            // id: 436
+            // sender_id: 57276
+            // msg: "#-EMOJI11EMOJI-##-EMOJI11EMOJI-##-EMOJI11EMOJI-#"
+            // time: "2020-03-05 16:28:08"
+            // unread: 0
+            // }
+            // 客服部分
+            // msg: []
+            // username: "皇家88官方"
+            // userid: 0
+            // isCustomerService: true
         })
 
         socket.on('backchatlog', data => {
             console.log(data);
             // 這裡製作一個點擊已讀的動作當作滾動
+            $('#chatlog').append(`<button onclick="sendMsg(${$('#touserid').val()})" class="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded">送出</button>`)
             data.sort((itemA, itemB) => {
                 return Number(itemA.id) - Number(itemB.id)
             }).forEach(item => {
@@ -74,11 +92,24 @@
                 `
                 $('#chatlog').append(message)
             })
+
+            // is_sender: false
+            // sender_name: "michaelcs01"
+            // id: 427
+            // msg: "&lt;img src=&quot;https://image.ef15.club:28443/20200304/cdcf182a1404785968de8510ba0b605b7ccf7752fd94f865ed38bf5da1508d89.jpg&quot;&gt;"
+            // time: "2020-03-04 11:00:52"
+            // status: 1
+            // replyto: []
+            // type: ""
         })
         // 這裡做一個點訊息增加已讀的動作
 
         socket.on('receivedunread', data => {
             console.log(data);
+            const touserid = $('#touserid').val();
+            $(`#unread_${touserid}`).text(data.unreadcount)
+            // senderuserid: "57284"
+            // unreadcount: 0
         })
 
         socket.on('disconnect', _ => {
@@ -131,6 +162,10 @@
                 chatid: Msgid,
             }
             socket.emit('setreaded', sendUnread)
+        }
+
+        function sendMsg(toUserid) {
+            console.log(toUserid);
         }
 
     </script>
