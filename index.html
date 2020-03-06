@@ -112,11 +112,38 @@
             // unreadcount: 0
         })
 
+        socket.on('receiveMsg', data => {
+            console.log(data);
+            // id: 439
+            // sender_id: "57276"
+            // msg: "test"
+            // time: "2020-03-06 14:40:01"
+            // status: 0
+            // replyto: []
+            // type: ""
+            // 有回覆的狀態
+            // id: 440
+            // sender_id: "57276"
+            // msg: "testreply"
+            // time: "2020-03-06 14:46:07"
+            // status: 0
+            // replyto:{
+            // sendername: "michaelcs011"
+            // time: "2020-03-06 14:37:17"
+            // msg: "test"
+            // }
+        })
+
         socket.on('disconnect', _ => {
             console.log('斷線');
         })
         socket.on('reconnect', _ => {
             console.log('重新連線');
+        })
+
+        // 處理送出訊息傳來的錯誤errorRecMsg
+        socket.on('errorRecMsg', data => {
+            console.log(data);
         })
 
         $(function () {
@@ -165,7 +192,15 @@
         }
 
         function sendMsg(toUserid) {
-            console.log(toUserid);
+            const sendData = {
+                auth: localStorage.getItem('jwt'),
+                touserid: toUserid,
+                msg: 'testreply',
+                replyto: '437'
+            }
+            // replyto 如果沒有則要帶0
+            socket.emit('sendMsg', sendData)
+            // 這裡大概要做回覆功能還有圖片服務的功能。
         }
 
     </script>
